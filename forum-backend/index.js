@@ -2,6 +2,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 
 // Load environment variables
 dotenv.config();
@@ -13,11 +14,20 @@ const app = express();
 app.use(cors()); // Allows your React frontend to talk to this API
 app.use(express.json()); // Parses incoming JSON data from forms
 
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch((error) => console.error('MongoDB connection failed:', error));
+
+mongoose.connection.on('error', err => console.error('MongoDB runtime error:', err));
+
+// Define routes
+
 app.get('/', (req, res) => {
   res.send('Forum API is running. Try hitting /api/status');
 });
 
-// A simple test route to make sure it works
+// Test route to make sure it works
 app.get('/api/status', (req, res) => {
   res.json({ message: 'Backend API is running smoothly!' });
 });
