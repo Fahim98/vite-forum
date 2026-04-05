@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import userRoutes from './routes/userRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -31,6 +32,9 @@ app.get('/', (req, res) => {
 app.get('/api/status', (req, res) => {
   res.json({ message: 'Backend API is running smoothly!' });
 });
+
+//User routes
+app.use('/api/users', userRoutes);
 
 // Define the port (uses .env if available, otherwise 5000)
 const PORT = process.env.PORT || 5000;

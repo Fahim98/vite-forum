@@ -18,14 +18,44 @@ export default function Register() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();  
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords do not match!");
       return;
     }
-    // Will connect to Express backend later
-    console.log('Registration submitted:', formData);
+
+    try {
+      // send POST request to our express server
+      const response = await fetch('http://localhost:5000/api/users/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        console.log('Registration Successful! JWT Token received:', data);
+        alert('Registration successful! You can now log in.');
+        
+        setFormData({ username: '', email: '', password: '', confirmPassword: '' });
+        
+      } else {
+        alert(`Error: ${data.message}`);
+        console.error('Registration failed:', data);
+      }
+      
+    } catch (error) {
+      console.error('Network error during registration:', error);
+      alert('Could not connect to the server. Please try again later.');
+    }
   };
 
   return (

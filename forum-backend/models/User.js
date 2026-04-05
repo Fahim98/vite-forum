@@ -23,20 +23,18 @@ const userSchema = new mongoose.Schema({
     minlength: 6
   }
 }, {
-  timestamps: true // Automatically adds createdAt and updatedAt dates
+  timestamps: true 
 });
 
 // This function runs automatically right BEFORE a user is saved to the database
 userSchema.pre('save', async function (next) {
-  // If the password wasn't modified, skip this step
   if (!this.isModified('password')) {
-    return next();
+    return;
   }
 
   // Generate a 'salt' (random data) and hash the password
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
 // A custom method to check if a typed password matches the hashed password
