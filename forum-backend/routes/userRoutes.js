@@ -2,6 +2,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -78,5 +79,14 @@ router.post('/login', async(req,res) => {
         res.status(500).json({message: 'Server error during login'});
     }
 });
+
+// @route   GET /api/users/profile
+// @desc    Get user profile data
+router.get('/profile', protect, async (req, res) => {
+    res.status(200).json({
+      message: "You made it past the VIP bouncer!",
+      user: req.user
+    });
+  });
 
 export default router;
