@@ -1,0 +1,36 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Our Relational User Table
+model User {
+  id        String   @id @default(uuid()) // Uses a standard UUID instead of Mongo's ObjectId
+  username  String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // The relation: One User can have many Posts
+  posts     Post[]
+}
+
+// Our Relational Post Table
+model Post {
+  id        String   @id @default(uuid())
+  title     String
+  content   String
+  tags      String[] // Arrays are natively supported in Postgres!
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign Key linking the Post to the User
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+}

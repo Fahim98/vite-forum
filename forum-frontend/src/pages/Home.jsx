@@ -21,7 +21,7 @@ export default function Home() {
           <p>A place to discuss code, share projects, and collaborate.</p>
           
           <div className="home-actions">
-            <Link to="/login" className="btn primary-btn">Log In</Link>
+            {/* <Link to="/login" className="btn primary-btn">Log In</Link> */}
             <Link to="/register" className="btn secondary-btn">Sign Up</Link>
           </div>
         </>

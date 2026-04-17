@@ -1,49 +1,47 @@
-// routes/userRoutes.js
 import express from 'express';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
+import prisma from '../config/db.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // @route   POST /api/users/register
-// @desc    Register a new user
 router.post('/register', async (req, res) => {
   try {
-    // destructure the data sent from the React frontend
     const { username, email, password } = req.body;
 
-    // check if a user with this email or username already exists
-    const userExists = await User.findOne({ 
-      $or: [{ email }, { username }] 
+    // 1. Check if user exists using Prisma
+    const userExists = await prisma.user.findUnique({
+      where: { email },
     });
 
     if (userExists) {
-      return res.status(400).json({ message: 'User with that email or username already exists!' });
+      return res.status(400).json({ message: 'User already exists' });
     }
 
-    // create the new user in the database
-    const user = await User.create({
-      username,
-      email,
-      password
+    // 2. Manually hash the password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // 3. Create the user in PostgreSQL
+    const user = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+      },
     });
 
-    // generate a JWT token so the user is instantly logged in
-    const token = jwt.sign(
-      { id: user._id }, 
-      process.env.JWT_SECRET, 
-      { expiresIn: '30d' } // token expiry time: 30 days
-    );
+    // 4. Generate Token
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-    // send back the success response with the token
     res.status(201).json({
-      _id: user._id,
+      id: user.id,
       username: user.username,
       email: user.email,
-      token: token
+      token,
     });
-
   } catch (error) {
     console.error('Registration Error:', error);
     res.status(500).json({ message: 'Server error during registration' });
@@ -51,42 +49,41 @@ router.post('/register', async (req, res) => {
 });
 
 // @route   POST /api/users/login
-// @desc    Authenticate user & get token
-router.post('/login', async(req,res) => {
-    try{
-        const{email, password} = req.body;
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-        const user = await User.findOne({ email });
+    // 1. Find user in PostgreSQL
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-        if (user &&(await user.matchPassword(password))){
-            const token = jwt.sign(
-                {id: user._id},
-                process.env.JWT_SECRET,
-                {expiresIn:'30d'}
-            );
+    // 2. Check user exists AND manually compare passwords
+    if (user && (await bcrypt.compare(password, user.password))) {
+      
+      const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-            res.json({
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                token: token
-            });
-        } else {
-            res.status(401).json({message:'Invalid email or password'});
-        }
-    } catch(error) {
-        console.error('Login error', error);
-        res.status(500).json({message: 'Server error during login'});
+      res.json({
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        token,
+      });
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
     }
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ message: 'Server error during login' });
+  }
 });
 
-// @route   GET /api/users/profile
-// @desc    Get user profile data
+// @route   GET /api/users/profile (Protected Test Route)
 router.get('/profile', protect, async (req, res) => {
-    res.status(200).json({
-      message: "You made it past the VIP bouncer!",
-      user: req.user
-    });
+  res.status(200).json({
+    message: "You made it past the VIP bouncer!",
+    user: req.user
   });
+});
 
 export default router;

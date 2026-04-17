@@ -8,8 +8,7 @@ function App() {
   return (
     <Router>
       <div className="app-container">
-        <Navbar />
-        
+        <Navbar /> 
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
